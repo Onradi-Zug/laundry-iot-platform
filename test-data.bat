@@ -1,0 +1,1 @@
+curl -v -X POST http://localhost:3000/bookings -H "Content-Type: application/json" -d "{\"userId\":\"e4b52a96-e3d7-432a-a187-1a9116e4851d\",\"machineId\":\"2e686aa0-0ee1-4bcd-aa06-7182811050a8\",\"startTime\":\"2026-05-03T12:00:00Z\",\"endTime\":\"2026-05-03T13:00:00Z\"}" 
