@@ -2,7 +2,7 @@ import { Injectable, ConflictException, InternalServerErrorException, Unauthoriz
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
-import * as jwt from 'jsonwebtoken';
+import { JwtService } from '@nestjs/jwt';
 import { User } from '../users/user.entity';
 import { RegisterDto } from './dto/register.dto';
 
@@ -11,6 +11,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
+    private readonly jwtService: JwtService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -56,8 +57,7 @@ export class AuthService {
     }
 
     const payload = { sub: user.id, email: user.email, role: user.role };
-    const secret = process.env.JWT_SECRET || 'change_this_secret_now';
-    const token = jwt.sign(payload, secret, { expiresIn: '7d' });
+    const token = this.jwtService.sign(payload);
 
     return { accessToken: token };
   }
