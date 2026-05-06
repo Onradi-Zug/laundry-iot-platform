@@ -9,6 +9,6 @@ import { Tenant } from '../tenants/tenant.entity';
     TypeOrmModule.forFeature([User, Tenant]),
   ],
   providers: [UsersService],
-  exports: [UsersService],
+  exports: [UsersService, TypeOrmModule],
 })
 export class UsersModule {}
