@@ -1,6 +1,4 @@
 import { ProtectedModule } from './protected/protected.module';
-import { ProtectedModule } from './protected/protected.module';
-import { ProtectedModule } from './protected/protected.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MachinesModule } from './machines/machines.module';
@@ -23,6 +21,7 @@ import { AuthModule } from './auth/auth.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    ProtectedModule,
     AuthModule,
     UsersModule,
     BookingsModule,
