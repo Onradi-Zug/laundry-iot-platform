@@ -2,6 +2,7 @@ import { Injectable, ConflictException, InternalServerErrorException, Unauthoriz
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 import { User } from '../users/user.entity';
 import { RegisterDto } from './dto/register.dto';
 
@@ -40,7 +41,6 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    // Явно вибираємо password, навіть якщо в сутності стоїть select: false
     const user = await this.usersRepository.findOne({
       where: { email },
       select: ['id', 'email', 'password', 'role'],
@@ -55,7 +55,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const { password: _p, ...result } = user as any;
-    return result;
+    const payload = { sub: user.id, email: user.email, role: user.role };
+    const secret = process.env.JWT_SECRET || 'change_this_secret_now';
+    const token = jwt.sign(payload, secret, { expiresIn: '7d' });
+
+    return { accessToken: token };
   }
 }
