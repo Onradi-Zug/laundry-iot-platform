@@ -1,7 +1,7 @@
-import { Injectable, ConflictException, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, ConflictException, InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { User } from '../users/user.entity';
 import { RegisterDto } from './dto/register.dto';
 
@@ -13,7 +13,6 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    // перевірка наявності перед збереженням
     const existing = await this.usersRepository.findOne({ where: { email: dto.email } });
     if (existing) {
       throw new ConflictException('Email already exists');
@@ -30,12 +29,9 @@ export class AuthService {
 
     try {
       const saved = await this.usersRepository.save(user);
-      // не повертати пароль у відповіді
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = saved as any;
       return result;
     } catch (err) {
-      // додаткова перевірка на випадок гонки записів
       if ((err as any)?.code === '23505') {
         throw new ConflictException('Email already exists');
       }
@@ -43,5 +39,18 @@ export class AuthService {
     }
   }
 
-  // інші методи (login тощо) залишаються без змін
+  async login(email: string, password: string) {
+    const user = await this.usersRepository.findOne({ where: { email } });
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const match = await bcrypt.compare(password, (user as any).password || '');
+    if (!match) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const { password: _p, ...result } = user as any;
+    return result;
+  }
 }
