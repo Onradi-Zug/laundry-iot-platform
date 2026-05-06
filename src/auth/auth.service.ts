@@ -1,65 +1,23 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcryptjs';
-import { UsersService } from '../users/users.service';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import * as bcrypt from 'bcrypt';
+import { User } from '../users/user.entity';
 
 @Injectable()
 export class AuthService {
-  constructor(
-    private readonly users: UsersService,
-    private readonly jwt: JwtService,
-  ) {}
+  constructor(@InjectRepository(User) private readonly userRepository: Repository<User>) {}
 
-  async validateUser(email: string, password: string) {
-    const user = await this.users.findByEmailRaw(email);
-    if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) {
-      throw new UnauthorizedException('Invalid credentials');
-    }
-
+  async validateUserByEmail(email: string, plainPassword: string): Promise<User> {
+    const user = await this.userRepository
+      .createQueryBuilder('user')
+      .addSelect('user.password')
+      .where('user.email = :email', { email })
+      .getOne();
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+    const matches = await bcrypt.compare(plainPassword, (user as any).password);
+    if (!matches) throw new UnauthorizedException('Invalid credentials');
+    delete (user as any).password;
     return user;
-  }
-
-  async login(email: string, password: string) {
-    const user = await this.validateUser(email, password);
-
-    const payload = {
-      sub: user.id,
-      tenantId: user.tenant.id,
-      role: user.role,
-    };
-
-    return {
-      accessToken: this.jwt.sign(payload),
-    };
-  }
-
-  async register(email: string, password: string, role: string) {
-    const existing = await this.users.findByEmailRaw(email);
-    if (existing) {
-      throw new BadRequestException('User already exists');
-    }
-
-    const hashed = await bcrypt.hash(password, 10);
-
-    const user = await this.users.createUser({
-      email,
-      password: hashed,
-      role,
-    });
-
-    const payload = {
-      sub: user.id,
-      tenantId: user.tenant.id,
-      role: user.role,
-    };
-
-    return {
-      accessToken: this.jwt.sign(payload),
-    };
   }
 }
