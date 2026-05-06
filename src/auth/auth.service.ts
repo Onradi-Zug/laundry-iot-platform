@@ -40,7 +40,12 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
-    const user = await this.usersRepository.findOne({ where: { email } });
+    // Явно вибираємо password, навіть якщо в сутності стоїть select: false
+    const user = await this.usersRepository.findOne({
+      where: { email },
+      select: ['id', 'email', 'password', 'role'],
+    } as any);
+
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
