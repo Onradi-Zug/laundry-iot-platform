@@ -1,5 +1,5 @@
-// src/users/user.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { Tenant } from '../tenants/tenant.entity';
 import { Booking } from '../bookings/booking.entity';
 
@@ -11,7 +11,8 @@ export class User {
   @Column({ unique: true })
   email: string;
 
-  @Column()
+  @Exclude()
+  @Column({ select: false })
   password: string;
 
   @Column({ nullable: true })
