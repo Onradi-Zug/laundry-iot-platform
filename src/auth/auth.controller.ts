@@ -12,7 +12,7 @@ export class AuthController {
 
   @Post('register')
   register(@Body() body: any) {
-    console.log('Register body:', body);
+    console.log('Register raw body:', body);
     return this.auth.register(body);
   }
 }
