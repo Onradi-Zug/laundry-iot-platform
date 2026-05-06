@@ -23,6 +23,7 @@ export class AuthController {
 
   @Post('register')
   register(@Body() body: RegisterDto) {
+    console.log('Register body:', body);
     return this.auth.register(body);
   }
 }
