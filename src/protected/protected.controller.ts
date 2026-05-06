@@ -1,12 +1,11 @@
-import { Request } from 'express';
 import { Controller, Get, UseGuards, Req } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { OptionalJwtGuard } from '../auth/optional-jwt.guard';
 
 @Controller('protected')
 export class ProtectedController {
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(OptionalJwtGuard)
   @Get('endpoint')
-  getEndpoint(@Req() req: Request) {
-    return { message: 'Protected data', user: req.user };
+  getEndpoint(@Req() req: any) {
+    return { message: 'Protected data', user: req.user || null };
   }
 }
