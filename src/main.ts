@@ -1,16 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ClassSerializerInterceptor, ValidationPipe } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({
-    origin: '*',
-    methods: 'GET,POST,PUT,PATCH,DELETE',
-    allowedHeaders: 'Content-Type,Authorization'
-  });
+  // Validation for DTOs: strips unknown properties and transforms payloads to DTO types
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
 
-  await app.listen(process.env.PORT || 3000);
+  // Hide excluded properties (e.g., @Exclude on entities) when serializing responses
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
+
+  await app.listen(3000);
 }
-
 bootstrap();

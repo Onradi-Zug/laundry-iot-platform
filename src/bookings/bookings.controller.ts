@@ -1,5 +1,13 @@
-import { Controller, Get, Param, Post, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Post,
+  Body,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { BookingsService } from './bookings.service';
+import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Controller('bookings')
 export class BookingsController {
@@ -11,25 +19,19 @@ export class BookingsController {
   }
 
   @Get(':id')
-  getBooking(@Param('id') id: string) {
+  async getBooking(
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
     return this.bookings.findById(id);
   }
 
   @Post()
-  createBooking(
-    @Body()
-    body: {
-      userId: string;
-      machineId: string;
-      startTime: string;
-      endTime: string;
-    }
-  ) {
+  createBooking(@Body() dto: CreateBookingDto) {
     return this.bookings.create({
-      user: { id: body.userId } as any,
-      machine: { id: body.machineId } as any,
-      startTime: new Date(body.startTime),
-      endTime: new Date(body.endTime)
+      user: { id: dto.userId } as any,
+      machine: { id: dto.machineId } as any,
+      startTime: new Date(dto.startTime),
+      endTime: new Date(dto.endTime),
     });
   }
 }
