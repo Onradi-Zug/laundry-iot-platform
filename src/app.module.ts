@@ -6,6 +6,7 @@ import { RecoveryModule } from './recovery/recovery.module';
 import { BookingsModule } from './bookings/bookings.module';
 import { UsersModule } from './users/users.module';
 import { BuildingsModule } from './buildings/buildings.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { BuildingsModule } from './buildings/buildings.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
+    AuthModule,
     UsersModule,
     BookingsModule,
     BuildingsModule,
