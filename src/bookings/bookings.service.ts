@@ -1,79 +1,55 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Booking } from './booking.entity';
-import { CreateBookingDto } from './dto/create-booking.dto';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
+import { Laundry } from '../laundries/laundry.entity';
+import { Tenant } from '../tenants/tenant.entity';
+import { Booking } from '../bookings/booking.entity';
+import { Event } from '../events/event.entity';
 
-@Injectable()
-export class BookingsService {
-  constructor(
-    @InjectRepository(Booking)
-    private readonly bookingRepository: Repository<Booking>,
-  ) {}
+@Entity('machines')
+export class Machine {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-  async create(payload: {
-    user: { id: string };
-    machine: { id: string };
-    startTime: Date;
-    endTime: Date;
-  }): Promise<Booking> {
-    const booking = this.bookingRepository.create({
-      user: { id: payload.user.id } as any,
-      machine: { id: payload.machine.id } as any,
-      startTime: payload.startTime,
-      endTime: payload.endTime,
-      status: 'active',
-    });
+  @Column()
+  name: string;
 
-    const saved = await this.bookingRepository.save(booking);
-    // Ensure password is not leaked (defensive)
-    if (saved.user && (saved.user as any).password) {
-      delete (saved.user as any).password;
-    }
-    return saved;
-  }
+  @Column()
+  type: string;
 
-  async findById(id: string): Promise<Booking> {
-    const booking = await this.bookingRepository.findOne({
-      where: { id },
-      relations: ['user', 'machine'],
-    });
+  // ДОДАНО: статус busy для бронювань
+  @Column({ default: 'idle' })
+  status: 'idle' | 'busy' | 'running' | 'error';
 
-    if (!booking) {
-      throw new NotFoundException(`Booking ${id} not found`);
-    }
+  @Column()
+  laundryId: string;
 
-    // Defensive: remove password if present in the returned object
-    if (booking.user && (booking.user as any).password) {
-      delete (booking.user as any).password;
-    }
+  @ManyToOne(() => Laundry, (laundry) => laundry.machines, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'laundryId' })
+  laundry: Laundry;
 
-    return booking;
-  }
+  @Column({ nullable: true })
+  tenantId: string;
 
-  async findAll(): Promise<Booking[]> {
-    const bookings = await this.bookingRepository.find({
-      relations: ['user', 'machine'],
-      order: { startTime: 'DESC' },
-    });
+  @ManyToOne(() => Tenant, (tenant) => tenant.machines, {
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'tenantId' })
+  tenant: Tenant;
 
-    // Defensive: strip password from every user object
-    for (const b of bookings) {
-      if (b.user && (b.user as any).password) {
-        delete (b.user as any).password;
-      }
-    }
+  @OneToMany(() => Booking, (booking) => booking.machine)
+  bookings: Booking[];
 
-    return bookings;
-  }
+  @OneToMany(() => Event, (event) => event.machine)
+  events: Event[];
 
-  // Optional helper used by controller DTO flow
-  async createFromDto(dto: CreateBookingDto) {
-    return this.create({
-      user: { id: dto.userId },
-      machine: { id: dto.machineId },
-      startTime: new Date(dto.startTime),
-      endTime: new Date(dto.endTime),
-    });
-  }
+  @Column({ type: 'timestamptz', nullable: true })
+  lastEventAt: Date | null;
 }

@@ -1,16 +1,17 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThan } from 'typeorm';
 import { Machine } from './machine.entity';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class MachinesService {
   constructor(
     @InjectRepository(Machine)
     private readonly repo: Repository<Machine>,
+    private readonly eventsService: EventsService,
   ) {}
 
-  // === ДОДАНО ДЛЯ RECOVERY ===
   findAll() {
     return this.repo.find();
   }
@@ -23,11 +24,60 @@ export class MachinesService {
     return this.repo.find({ where: { laundryId } });
   }
 
-  async updateStatus(id: string, status: 'idle' | 'running' | 'error') {
-    await this.repo.update(id, { status, lastEventAt: new Date() });
-    return this.findById(id);
+  // ============================
+  // CHECK AVAILABILITY
+  // ============================
+  async ensureAvailable(id: string) {
+    const machine = await this.findById(id);
+    if (!machine) throw new BadRequestException('Machine not found');
+
+    if (machine.status === 'error') {
+      throw new BadRequestException('Machine is in error state');
+    }
+
+    if (machine.status === 'running') {
+      throw new BadRequestException('Machine is currently running');
+    }
+
+    if (machine.status === 'busy') {
+      throw new BadRequestException('Machine is already booked');
+    }
+
+    return machine;
   }
 
+  // ============================
+  // UPDATE STATUS + EVENT
+  // ============================
+  async updateStatus(
+    id: string,
+    status: 'idle' | 'busy' | 'running' | 'error',
+  ) {
+    const machine = await this.findById(id);
+    if (!machine) throw new BadRequestException('Machine not found');
+
+    const oldStatus = machine.status;
+
+    await this.repo.update(id, { status, lastEventAt: new Date() });
+    const updated = await this.findById(id);
+
+    // Подія machine_status_changed
+    await this.eventsService.create({
+      machine: { id },
+      type: 'machine_status_changed',
+      payload: {
+        machineId: id,
+        oldStatus,
+        newStatus: status,
+      },
+    });
+
+    return updated;
+  }
+
+  // ============================
+  // FIND STUCK MACHINES
+  // ============================
   async findStuckMachines(timeoutSeconds: number) {
     const threshold = new Date(Date.now() - timeoutSeconds * 1000);
     return this.repo.find({
@@ -38,6 +88,9 @@ export class MachinesService {
     });
   }
 
+  // ============================
+  // CREATE MACHINE
+  // ============================
   create(data: {
     name: string;
     type: string;

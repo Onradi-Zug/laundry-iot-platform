@@ -1,13 +1,16 @@
-import { ProtectedModule } from './protected/protected.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MachinesModule } from './machines/machines.module';
-import { EventsModule } from './events/events.module';
-import { RecoveryModule } from './recovery/recovery.module';
-import { BookingsModule } from './bookings/bookings.module';
-import { UsersModule } from './users/users.module';
-import { BuildingsModule } from './buildings/buildings.module';
+
 import { AuthModule } from './auth/auth.module';
+import { UsersModule } from './users/users.module';
+import { ProtectedModule } from './protected/protected.module';
+
+import { MachinesModule } from './machines/machines.module';
+import { TenantsModule } from './tenants/tenants.module';
+import { BuildingsModule } from './buildings/buildings.module';
+import { LaundriesModule } from './laundries/laundries.module';
+import { BookingsModule } from './bookings/bookings.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -21,14 +24,19 @@ import { AuthModule } from './auth/auth.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
-    ProtectedModule,
+
     AuthModule,
     UsersModule,
-    BookingsModule,
-    BuildingsModule,
+    ProtectedModule,
+
     MachinesModule,
+    TenantsModule,
+    BuildingsModule,
+    LaundriesModule,
+    BookingsModule,
     EventsModule,
-    RecoveryModule,
   ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

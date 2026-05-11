@@ -22,8 +22,9 @@ export class Machine {
   @Column()
   type: string;
 
+  // ДОДАНО: статус busy для бронювань
   @Column({ default: 'idle' })
-  status: 'idle' | 'running' | 'error';
+  status: 'idle' | 'busy' | 'running' | 'error';
 
   @Column()
   laundryId: string;

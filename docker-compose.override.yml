@@ -1,4 +1,0 @@
-﻿services:
-  backend:
-    volumes:
-      - ./src:/usr/src/app/src

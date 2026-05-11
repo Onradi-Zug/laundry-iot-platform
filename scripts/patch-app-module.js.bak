@@ -1,0 +1,20 @@
+const fs = require('fs');
+const p = 'src/app.module.ts';
+let s = fs.readFileSync(p, 'utf8');
+
+// Add import if missing
+if (!/ProtectedModule/.test(s)) {
+  s = "import { ProtectedModule } from './protected/protected.module';\n" + s;
+}
+
+// Insert ProtectedModule into imports array if not present
+s = s.replace(/imports\s*:\s*
+\[([\s\S]*?)\]
+
+/, (m, inner) => {
+  if (/ProtectedModule/.test(inner)) return m;
+  return 'imports: [ProtectedModule,' + inner + ']';
+});
+
+fs.writeFileSync(p, s);
+console.log('app.module.ts patched');

@@ -12,6 +12,12 @@ export class Notification {
   @Column()
   type: string; // machine_finished | machine_error | booking_reminder | custom
 
+  @Column()
+  title: string;
+
+  @Column()
+  message: string;
+
   @Column({ type: 'jsonb', nullable: true })
   payload: any;
 

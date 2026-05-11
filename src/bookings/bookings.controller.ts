@@ -1,37 +1,45 @@
 import {
   Controller,
   Get,
-  Param,
   Post,
+  Param,
   Body,
-  ParseUUIDPipe,
+  Patch,
 } from '@nestjs/common';
 import { BookingsService } from './bookings.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Controller('bookings')
 export class BookingsController {
-  constructor(private readonly bookings: BookingsService) {}
+  constructor(private readonly bookingsService: BookingsService) {}
 
   @Get()
-  getAllBookings() {
-    return this.bookings.findAll();
+  findAll() {
+    return this.bookingsService.findAll();
   }
 
   @Get(':id')
-  async getBooking(
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ) {
-    return this.bookings.findById(id);
+  findById(@Param('id') id: string) {
+    return this.bookingsService.findById(id);
   }
 
   @Post()
-  createBooking(@Body() dto: CreateBookingDto) {
-    return this.bookings.create({
-      user: { id: dto.userId } as any,
-      machine: { id: dto.machineId } as any,
+  create(@Body() dto: CreateBookingDto) {
+    return this.bookingsService.create({
+      userId: dto.userId,
+      machineId: dto.machineId,
       startTime: new Date(dto.startTime),
       endTime: new Date(dto.endTime),
     });
+  }
+
+  @Patch(':id/finish')
+  finish(@Param('id') id: string) {
+    return this.bookingsService.finish(id);
+  }
+
+  @Patch(':id/cancel')
+  cancel(@Param('id') id: string) {
+    return this.bookingsService.cancel(id);
   }
 }
